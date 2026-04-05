@@ -1,8 +1,11 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import joblib
+import os
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -10,8 +13,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-model = joblib.load("model.pkl")
-vectorizer = joblib.load("vectorizer.pkl")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+model = joblib.load(os.path.join(BASE_DIR, "model.pkl"))
+vectorizer = joblib.load(os.path.join(BASE_DIR, "vectorizer.pkl"))
 
 class Review(BaseModel):
     text: str
@@ -22,13 +28,6 @@ def predict(review: Review):
 
     X = vectorizer.transform([text])
     prob = model.predict_proba(X)[0][1]
-
-    # Get feature names (words)
-    feature_names = vectorizer.get_feature_names_out()
-
-    # Get vector values
-    vector = X.toarray()[0]
-
 
     return {
         "fake_probability": float(prob),
